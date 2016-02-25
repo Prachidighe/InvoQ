@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         image_refresh = (ImageView) findViewById(R.id.image_refresh);
+        image_refresh.setVisibility(View.GONE);
 
         cd = new WIFIInternetConnectionDetector(getApplicationContext());
         new Handler().postDelayed(new Runnable() {
@@ -45,6 +46,8 @@ public class MainActivity extends AppCompatActivity
                 {
                     showAlertDialog(MainActivity.this, "No Internet Connection",
                             "Your device doesn't have WIFI internet access please connect and try to refresh again", false);
+                    image_refresh.setVisibility(View.VISIBLE);
+
                 }
             }
         }, SPLASH_TIME_OUT);
@@ -64,6 +67,7 @@ public class MainActivity extends AppCompatActivity
                 {
                     showAlertDialog(MainActivity.this, "No Internet Connection",
                             "Your device doesn't have WIFI internet access", false);
+
                 }
             }
         });

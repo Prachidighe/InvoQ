@@ -11,6 +11,7 @@ import android.support.v4.view.MenuItemCompat;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.Result;
@@ -21,11 +22,11 @@ import java.util.List;
 import me.dm7.barcodescanner.zxing.ZXingScannerView;
 
 public class ScannerActivity extends BaseScannerActivity implements MessageDialogFragment.MessageDialogListener,
-        ZXingScannerView.ResultHandler, FormatSelectorDialogFragment.FormatSelectorDialogListener,
-        CameraSelectorDialogFragment.CameraSelectorDialogListener {
+        ZXingScannerView.ResultHandler,
+        CameraSelectorDialogFragment.CameraSelectorDialogListener
+{
     private static final String FLASH_STATE = "FLASH_STATE";
     private static final String AUTO_FOCUS_STATE = "AUTO_FOCUS_STATE";
-    //private static final String SELECTED_FORMATS = "SELECTED_FORMATS";
     private static final String CAMERA_ID = "CAMERA_ID";
     private ZXingScannerView mScannerView;
     private boolean mFlash;
@@ -39,12 +40,11 @@ public class ScannerActivity extends BaseScannerActivity implements MessageDialo
         if(state != null) {
             mFlash = state.getBoolean(FLASH_STATE, false);
             mAutoFocus = state.getBoolean(AUTO_FOCUS_STATE, true);
-//            mSelectedIndices = state.getIntegerArrayList(SELECTED_FORMATS);
             mCameraId = state.getInt(CAMERA_ID, -1);
         } else {
             mFlash = false;
             mAutoFocus = true;
-  //          mSelectedIndices = null;
+            mSelectedIndices = null;
             mCameraId = -1;
         }
 
@@ -71,7 +71,6 @@ public class ScannerActivity extends BaseScannerActivity implements MessageDialo
         super.onSaveInstanceState(outState);
         outState.putBoolean(FLASH_STATE, mFlash);
         outState.putBoolean(AUTO_FOCUS_STATE, mAutoFocus);
-        //outState.putIntegerArrayList(SELECTED_FORMATS, mSelectedIndices);
         outState.putInt(CAMERA_ID, mCameraId);
     }
 
@@ -93,9 +92,6 @@ public class ScannerActivity extends BaseScannerActivity implements MessageDialo
             menuItem = menu.add(Menu.NONE, R.id.menu_auto_focus, 0, R.string.auto_focus_off);
         }
         MenuItemCompat.setShowAsAction(menuItem, MenuItem.SHOW_AS_ACTION_NEVER);
-
-        //menuItem = menu.add(Menu.NONE, R.id.menu_formats, 0, R.string.formats);
-        //MenuItemCompat.setShowAsAction(menuItem, MenuItem.SHOW_AS_ACTION_NEVER);
 
         menuItem = menu.add(Menu.NONE, R.id.menu_camera_selector, 0, R.string.select_camera);
         MenuItemCompat.setShowAsAction(menuItem, MenuItem.SHOW_AS_ACTION_NEVER);
@@ -125,11 +121,7 @@ public class ScannerActivity extends BaseScannerActivity implements MessageDialo
                 }
                 mScannerView.setAutoFocus(mAutoFocus);
                 return true;
-          /*  case R.id.menu_formats:
-                DialogFragment fragment = FormatSelectorDialogFragment.newInstance(this, mSelectedIndices);
-                fragment.show(getSupportFragmentManager(), "format_selector");
-                return true;
-          */  case R.id.menu_camera_selector:
+            case R.id.menu_camera_selector:
                 mScannerView.stopCamera();
                 DialogFragment cFragment = CameraSelectorDialogFragment.newInstance(this, mCameraId);
                 cFragment.show(getSupportFragmentManager(), "camera_selector");
@@ -149,10 +141,21 @@ public class ScannerActivity extends BaseScannerActivity implements MessageDialo
         //Toast.makeText(FullScannerActivity.this,"Contents = " + rawResult.getText() + ", Format = " + rawResult.getBarcodeFormat().toString(),Toast.LENGTH_SHORT).show();
 
         String scanned_result = rawResult.getText();
-        Intent intent = new Intent(ScannerActivity.this,WebViewActivity.class);
-        intent.putExtra("scanned_result",scanned_result);
-        startActivity(intent);
-        finish();
+        String format = rawResult.getBarcodeFormat().toString();
+
+        if(format.equalsIgnoreCase("QRCode") || format.equalsIgnoreCase("QR_Code")) {
+            Intent intent = new Intent(ScannerActivity.this, WebViewActivity.class);
+            intent.putExtra("scanned_result", scanned_result);
+            Toast.makeText(ScannerActivity.this,"Format - " +format,Toast.LENGTH_LONG).show();
+            startActivity(intent);
+            finish();
+        }
+        else
+        {
+            Toast.makeText(ScannerActivity.this,"Please scan only QR Code",Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(ScannerActivity.this,ScannerActivity.class);
+            startActivity(intent);
+        }
     }
 
     public void closeMessageDialog() {
@@ -175,12 +178,6 @@ public class ScannerActivity extends BaseScannerActivity implements MessageDialo
     public void onDialogPositiveClick(DialogFragment dialog) {
         // Resume the camera
         mScannerView.resumeCameraPreview(this);
-    }
-
-    @Override
-    public void onFormatsSaved(ArrayList<Integer> selectedIndices) {
-        mSelectedIndices = selectedIndices;
-        setupFormats();
     }
 
     @Override
