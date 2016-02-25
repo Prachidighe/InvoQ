@@ -1,2 +1,0 @@
-# InvoQ
-InvoQ Android App
